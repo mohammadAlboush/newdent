@@ -17,24 +17,48 @@
   // Activation overlay — required for audio autoplay policy
   overlay.addEventListener('click', () => {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // Play a muted tone to fully unlock audio on mobile/Safari
+    const unlock = audioCtx.createBufferSource();
+    unlock.buffer = audioCtx.createBuffer(1, 1, 22050);
+    unlock.connect(audioCtx.destination);
+    unlock.start(0);
+
     overlay.classList.add('hidden');
     isActivated = true;
 
-    // Try fullscreen
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
   });
 
+  // Keep audio context alive — browsers may suspend after inactivity
+  function wakeAudio() {
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+  }
+  document.addEventListener('visibilitychange', wakeAudio);
+  window.addEventListener('focus', wakeAudio);
+  setInterval(wakeAudio, 20000);
+
   // Triple chime: plays the two-tone gong 3 times with pauses
   function playTripleChime() {
     if (!audioCtx) return;
 
-    for (let i = 0; i < 3; i++) {
-      const offset = i * 1.0; // 1 second between each gong
-      const now = audioCtx.currentTime + offset;
-      playTone(523.25, now, 0.3);       // C5
-      playTone(659.25, now + 0.3, 0.3); // E5
+    const doPlay = () => {
+      if (audioCtx.state !== 'running') return;
+      for (let i = 0; i < 3; i++) {
+        const offset = i * 1.0;
+        const now = audioCtx.currentTime + offset;
+        playTone(523.25, now, 0.3);       // C5
+        playTone(659.25, now + 0.3, 0.3); // E5
+      }
+    };
+
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().then(doPlay).catch(() => {});
+    } else {
+      doPlay();
     }
   }
 
@@ -46,7 +70,7 @@
     osc.frequency.value = freq;
 
     gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(0.4, startTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0.7, startTime + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
     osc.connect(gain);

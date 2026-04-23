@@ -1,5 +1,5 @@
 (() => {
-  const socket = io();
+  const socket = io({ withCredentials: true });
 
   const patientInput = document.getElementById('patientInput');
   const roomSelect = document.getElementById('roomSelect');

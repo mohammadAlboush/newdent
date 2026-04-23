@@ -1,5 +1,6 @@
 (() => {
-  const socket = io();
+  const displaySecret = window.location.pathname.split('/').filter(Boolean).pop();
+  const socket = io({ auth: { displaySecret } });
 
   const overlay = document.getElementById('overlay');
   const idleDisplay = document.getElementById('idleDisplay');

@@ -10,13 +10,21 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-// In-memory state
+const REZEPTION_USER = process.env.REZEPTION_USER || 'rezeption';
+const REZEPTION_PASSWORD = process.env.REZEPTION_PASSWORD || 'bitte-aendern';
+const WARTEZIMMER_SECRET = process.env.WARTEZIMMER_SECRET || 'bitte-aendern';
+
+if (REZEPTION_PASSWORD === 'bitte-aendern' || WARTEZIMMER_SECRET === 'bitte-aendern') {
+  console.warn('\n⚠️  WARNUNG: Standard-Zugangsdaten aktiv!');
+  console.warn('   Bitte REZEPTION_PASSWORD und WARTEZIMMER_SECRET als Umgebungsvariablen setzen.\n');
+}
+
 let currentPatient = null;
 let currentRoom = null;
 let patientQueue = [];
 let clearTimer = null;
 
-const AUTO_CLEAR_MS = 60000; // 1 Minute
+const AUTO_CLEAR_MS = 60000;
 
 function startClearTimer() {
   if (clearTimer) clearTimeout(clearTimer);
@@ -29,30 +37,74 @@ function startClearTimer() {
   }, AUTO_CLEAR_MS);
 }
 
-// Serve static files
+function parseBasicAuth(header) {
+  if (!header || !header.startsWith('Basic ')) return null;
+  try {
+    const decoded = Buffer.from(header.slice(6), 'base64').toString();
+    const idx = decoded.indexOf(':');
+    if (idx < 0) return null;
+    return { user: decoded.slice(0, idx), pass: decoded.slice(idx + 1) };
+  } catch {
+    return null;
+  }
+}
+
+function isValidAdmin(creds) {
+  return creds && creds.user === REZEPTION_USER && creds.pass === REZEPTION_PASSWORD;
+}
+
+function basicAuth(req, res, next) {
+  const creds = parseBasicAuth(req.headers.authorization);
+  if (isValidAdmin(creds)) return next();
+  res.set('WWW-Authenticate', 'Basic realm="NEW DENT Rezeption"');
+  res.status(401).send('Authentifizierung erforderlich');
+}
+
+// Block direct .html file access — HTML pages must go through protected routes
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html')) return res.status(404).send('Not found');
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Routes
-app.get('/rezeption', (req, res) => {
+app.get('/', (req, res) => {
+  res.status(200).send('NEW DENT Wartezimmer läuft.');
+});
+
+app.get('/rezeption', basicAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'rezeption.html'));
 });
 
-app.get('/wartezimmer', (req, res) => {
+app.get('/wartezimmer/:secret', (req, res) => {
+  if (req.params.secret !== WARTEZIMMER_SECRET) {
+    return res.status(404).send('Not found');
+  }
   res.sendFile(path.join(__dirname, 'public', 'wartezimmer.html'));
 });
 
-app.get('/', (req, res) => {
-  res.redirect('/rezeption');
+// Socket.IO auth: admin (Basic Auth header) OR display (secret via auth payload)
+io.use((socket, next) => {
+  const creds = parseBasicAuth(socket.handshake.headers.authorization);
+  if (isValidAdmin(creds)) {
+    socket.isAdmin = true;
+    return next();
+  }
+  const displaySecret = socket.handshake.auth && socket.handshake.auth.displaySecret;
+  if (displaySecret === WARTEZIMMER_SECRET) {
+    socket.isAdmin = false;
+    return next();
+  }
+  next(new Error('Unauthorized'));
 });
 
-// Socket.IO
 io.on('connection', (socket) => {
-  console.log(`Client verbunden: ${socket.id}`);
+  console.log(`Client verbunden: ${socket.id} (${socket.isAdmin ? 'admin' : 'display'})`);
 
-  // Send current state to newly connected client
   socket.emit('queue:update', { currentPatient, currentRoom, patientQueue });
 
   socket.on('patient:call', ({ name, room }) => {
+    if (!socket.isAdmin) return;
     if (!name || !name.trim()) return;
     name = name.trim();
     room = room || null;
@@ -68,6 +120,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('patient:recall', ({ name, room }) => {
+    if (!socket.isAdmin) return;
     if (!name || !name.trim()) return;
     name = name.trim();
     room = room || currentRoom;
@@ -80,6 +133,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('patient:remove', (name) => {
+    if (!socket.isAdmin) return;
     if (!name || !name.trim()) return;
     name = name.trim();
     patientQueue = patientQueue.filter(p => p !== name);
@@ -98,7 +152,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Get LAN IP address
 function getLanIP() {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
@@ -111,7 +164,6 @@ function getLanIP() {
   return 'localhost';
 }
 
-// Start server
 server.listen(PORT, '0.0.0.0', () => {
   const lanIP = getLanIP();
   console.log('');
@@ -119,12 +171,11 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('║       NEW DENT Wartezimmer-Aufrufsystem          ║');
   console.log('╠══════════════════════════════════════════════════╣');
   console.log(`║  Rezeption:    http://${lanIP}:${PORT}/rezeption`);
-  console.log(`║  Wartezimmer:  http://${lanIP}:${PORT}/wartezimmer`);
+  console.log(`║  Wartezimmer:  http://${lanIP}:${PORT}/wartezimmer/${WARTEZIMMER_SECRET}`);
   console.log('╚══════════════════════════════════════════════════╝');
   console.log('');
 });
 
-// Error handling
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`\nFEHLER: Port ${PORT} ist bereits belegt!`);
@@ -134,7 +185,6 @@ server.on('error', (err) => {
   throw err;
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\nServer wird heruntergefahren...');
   io.close();

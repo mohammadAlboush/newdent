@@ -98,7 +98,7 @@
     patientName.textContent = name;
 
     if (room) {
-      patientLabel.textContent = 'Bitte in Behandlungszimmer kommen:';
+      patientLabel.textContent = 'Bitte ins Behandlungszimmer kommen:';
       patientRoom.textContent = `Zimmer ${room}`;
       patientRoom.style.display = '';
     } else {
@@ -143,7 +143,7 @@
       patientDisplay.classList.add('active');
       patientName.textContent = currentPatient;
       if (currentRoom) {
-        patientLabel.textContent = 'Bitte in Behandlungszimmer kommen:';
+        patientLabel.textContent = 'Bitte ins Behandlungszimmer kommen:';
         patientRoom.textContent = `Zimmer ${currentRoom}`;
         patientRoom.style.display = '';
       } else {

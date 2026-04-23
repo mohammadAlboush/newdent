@@ -1,0 +1,210 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-primary-light) 100%);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.header img {
+  height: 56px;
+  width: auto;
+}
+
+.header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.header h1 span {
+  color: var(--color-accent);
+}
+
+.card {
+  background: var(--color-white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 2rem;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.input-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.input-group input {
+  flex: 1 1 100%;
+  padding: 0.85rem 1rem;
+  border: 2px solid #dfe6e9;
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(90, 154, 154, 0.15);
+}
+
+.input-group select {
+  flex: 1 1 auto;
+  min-width: 180px;
+  padding: 0.95rem 1rem;
+  border: 2px solid #dfe6e9;
+  border-radius: var(--radius-sm);
+  font-size: 1.15rem;
+  font-weight: 500;
+  outline: none;
+  background: var(--color-white);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(90, 154, 154, 0.15);
+}
+
+.input-group button {
+  flex: 1 1 auto;
+  padding: 0.85rem 1.5rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.input-group button:hover {
+  background: var(--color-primary-dark);
+}
+
+.input-group button:active {
+  transform: scale(0.97);
+}
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-light);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  transition: background 0.3s;
+}
+
+.status-dot.connected {
+  background: var(--color-success);
+}
+
+.current-patient {
+  background: var(--color-primary-light);
+  border-left: 4px solid var(--color-primary);
+  padding: 1rem 1.25rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.current-patient strong {
+  color: var(--color-primary-dark);
+}
+
+.queue-list {
+  list-style: none;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eef2f3;
+}
+
+.queue-item:last-child {
+  border-bottom: none;
+}
+
+.queue-item-name {
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.queue-item-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-recall, .btn-remove {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-recall {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.btn-recall:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-remove {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.btn-remove:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-recall:active, .btn-remove:active {
+  transform: scale(0.95);
+}
+
+.empty-queue {
+  text-align: center;
+  color: var(--color-text-light);
+  padding: 1.5rem 0;
+  font-style: italic;
+}

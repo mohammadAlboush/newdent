@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEW DENT – Wartezimmer</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/wartezimmer.css">
+</head>
+<body>
+  <!-- Activation Overlay -->
+  <div class="overlay" id="overlay">
+    <div class="overlay-content">
+      <img src="/assets/logo.png" alt="NEW DENT">
+      <p>NEW DENT Wartezimmer-Anzeige</p>
+      <div class="hint">Klicken Sie hier, um die Anzeige zu starten</div>
+    </div>
+  </div>
+
+  <header class="wz-header">
+    <img src="/assets/logo.png" alt="NEW DENT Logo">
+    <h1>NEW <span>DENT</span> Zahnarztpraxis</h1>
+  </header>
+
+  <main class="wz-main">
+    <!-- Idle state -->
+    <div class="idle-display" id="idleDisplay">
+      <img src="/assets/logo.png" alt="NEW DENT" class="idle-logo">
+      <p>Herzlich Willkommen in unserer Praxis</p>
+    </div>
+
+    <!-- Active patient display -->
+    <div class="patient-display" id="patientDisplay">
+      <div class="patient-label" id="patientLabel">Bitte ins Behandlungszimmer kommen:</div>
+      <div class="patient-name" id="patientName"></div>
+      <div class="patient-room" id="patientRoom"></div>
+    </div>
+  </main>
+
+  <footer class="wz-footer">
+    <div class="clock" id="clock"></div>
+  </footer>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/wartezimmer.js"></script>
+</body>
+</html>

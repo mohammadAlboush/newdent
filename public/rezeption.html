@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEW DENT – Rezeption</title>
+  <link rel="stylesheet" href="/css/common.css">
+  <link rel="stylesheet" href="/css/rezeption.css">
+</head>
+<body>
+  <div class="header">
+    <img src="/assets/logo.png" alt="NEW DENT Logo">
+    <h1>NEW <span>DENT</span></h1>
+  </div>
+
+  <div class="card">
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Wartezimmer nicht verbunden</span>
+    </div>
+
+    <h2>Patient aufrufen</h2>
+    <div class="input-group">
+      <input type="text" id="patientInput" placeholder="Patientenname eingeben..." autofocus>
+      <select id="roomSelect">
+        <option value="">Kein Zimmer</option>
+        <option value="1">Zimmer 1</option>
+        <option value="2">Zimmer 2</option>
+        <option value="3">Zimmer 3</option>
+        <option value="4">Zimmer 4</option>
+        <option value="5">Zimmer 5</option>
+        <option value="6">Zimmer 6</option>
+      </select>
+      <button id="callBtn">Aufrufen</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="current-patient" id="currentPatient" style="display:none;">
+      Aktuell aufgerufen: <strong id="currentPatientName"></strong>
+    </div>
+
+    <h2>Warteschlange</h2>
+    <ul class="queue-list" id="queueList">
+      <li class="empty-queue">Keine Patienten in der Warteschlange</li>
+    </ul>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/rezeption.js"></script>
+</body>
+</html>

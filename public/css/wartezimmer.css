@@ -194,3 +194,34 @@ body {
   font-weight: 300;
   letter-spacing: 0.03em;
 }
+
+.audio-status {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: rgba(231, 76, 60, 0.15);
+  color: #c0392b;
+  border: 1px solid rgba(231, 76, 60, 0.4);
+  transition: opacity 0.4s, background 0.3s;
+  z-index: 100;
+  opacity: 1;
+}
+
+.audio-status.ready {
+  background: rgba(46, 204, 113, 0.15);
+  color: #27ae60;
+  border-color: rgba(46, 204, 113, 0.4);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.audio-status-icon {
+  font-size: 1rem;
+}

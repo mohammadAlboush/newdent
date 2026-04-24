@@ -9,6 +9,8 @@
   const patientLabel = document.getElementById('patientLabel');
   const patientRoom = document.getElementById('patientRoom');
   const clockEl = document.getElementById('clock');
+  const audioStatus = document.getElementById('audioStatus');
+  const gongAudio = document.getElementById('gongAudio');
 
   let audioCtx = null;
   let isActivated = false;
@@ -18,22 +20,60 @@
     return /^\d+$/.test(String(room)) ? `Zimmer ${room}` : String(room);
   }
 
-  // Activation overlay — required for audio autoplay policy
-  overlay.addEventListener('click', () => {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    // Play a muted tone to fully unlock audio on mobile/Safari
-    const unlock = audioCtx.createBufferSource();
-    unlock.buffer = audioCtx.createBuffer(1, 1, 22050);
-    unlock.connect(audioCtx.destination);
-    unlock.start(0);
+  function markAudioReady(ready) {
+    if (ready) {
+      audioStatus.classList.add('ready');
+      audioStatus.querySelector('.audio-status-icon').textContent = '🔊';
+      audioStatus.querySelector('.audio-status-text').textContent = 'Ton aktiv';
+      audioStatus.title = 'Ton aktiv';
+    } else {
+      audioStatus.classList.remove('ready');
+      audioStatus.querySelector('.audio-status-icon').textContent = '🔇';
+      audioStatus.querySelector('.audio-status-text').textContent = 'Ton inaktiv – Seite anklicken';
+      audioStatus.title = 'Ton inaktiv – Seite einmal anklicken';
+    }
+  }
+
+  function activate() {
+    if (isActivated) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      // Silent unlock for iOS/Safari/TV browsers
+      const unlock = audioCtx.createBufferSource();
+      unlock.buffer = audioCtx.createBuffer(1, 1, 22050);
+      unlock.connect(audioCtx.destination);
+      unlock.start(0);
+    } catch (e) {
+      console.warn('WebAudio nicht verfügbar:', e);
+    }
+
+    // Unlock HTML5 audio by priming a silent play()
+    if (gongAudio) {
+      const originalVolume = gongAudio.volume;
+      gongAudio.volume = 0;
+      gongAudio.play().then(() => {
+        gongAudio.pause();
+        gongAudio.currentTime = 0;
+        gongAudio.volume = originalVolume;
+      }).catch(() => {
+        gongAudio.volume = originalVolume;
+      });
+    }
 
     overlay.classList.add('hidden');
     isActivated = true;
+    markAudioReady(true);
 
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
-  });
+  }
+
+  // Activate on overlay click OR any interaction anywhere on the page
+  overlay.addEventListener('click', activate);
+  document.addEventListener('click', activate, { capture: true });
+  document.addEventListener('touchstart', activate, { capture: true, passive: true });
+  document.addEventListener('keydown', activate, { capture: true });
 
   // Keep audio context alive — browsers may suspend after inactivity
   function wakeAudio() {
@@ -45,24 +85,48 @@
   window.addEventListener('focus', wakeAudio);
   setInterval(wakeAudio, 20000);
 
-  // Triple chime: plays the two-tone gong 3 times with pauses
-  function playTripleChime() {
-    if (!audioCtx) return;
-
-    const doPlay = () => {
-      if (audioCtx.state !== 'running') return;
+  function playViaWebAudio() {
+    if (!audioCtx || audioCtx.state !== 'running') return false;
+    try {
       for (let i = 0; i < 3; i++) {
         const offset = i * 1.0;
         const now = audioCtx.currentTime + offset;
-        playTone(523.25, now, 0.3);       // C5
-        playTone(659.25, now + 0.3, 0.3); // E5
+        playTone(523.25, now, 0.3);
+        playTone(659.25, now + 0.3, 0.3);
       }
+      return true;
+    } catch (e) {
+      console.warn('WebAudio-Playback fehlgeschlagen:', e);
+      return false;
+    }
+  }
+
+  function playViaHtmlAudio() {
+    if (!gongAudio) return false;
+    try {
+      gongAudio.currentTime = 0;
+      gongAudio.volume = 1.0;
+      const p = gongAudio.play();
+      if (p && p.catch) p.catch(err => console.warn('HTML-Audio-Playback verweigert:', err));
+      return true;
+    } catch (e) {
+      console.warn('HTML-Audio-Playback fehlgeschlagen:', e);
+      return false;
+    }
+  }
+
+  function playTripleChime() {
+    if (!isActivated) return;
+
+    const attempt = () => {
+      if (playViaWebAudio()) return;
+      playViaHtmlAudio();
     };
 
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume().then(doPlay).catch(() => {});
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().then(attempt).catch(attempt);
     } else {
-      doPlay();
+      attempt();
     }
   }
 
@@ -84,9 +148,7 @@
     osc.stop(startTime + duration);
   }
 
-  // Display patient name
   socket.on('patient:display', ({ name, room }) => {
-    // Fade out current if visible
     if (patientDisplay.classList.contains('active')) {
       patientDisplay.classList.add('fade-out');
       setTimeout(() => showPatient(name, room), 300);
@@ -111,13 +173,11 @@
       patientRoom.style.display = 'none';
     }
 
-    // Force reflow for animation restart
     void patientDisplay.offsetWidth;
     patientDisplay.classList.add('active');
 
     playTripleChime();
 
-    // Auto-clear after 1 minute (client-side visual backup)
     if (clearTimer) clearTimeout(clearTimer);
     clearTimer = setTimeout(() => {
       clearDisplay();
@@ -134,12 +194,10 @@
     }, 300);
   }
 
-  // Clear display
   socket.on('patient:clear', () => {
     clearDisplay();
   });
 
-  // Sync state on connect/reconnect
   socket.on('queue:update', ({ currentPatient, currentRoom }) => {
     if (currentPatient) {
       idleDisplay.classList.add('hidden');
@@ -161,7 +219,6 @@
     }
   });
 
-  // Live clock
   function updateClock() {
     const now = new Date();
     const date = now.toLocaleDateString('de-DE', {
@@ -174,7 +231,7 @@
       hour: '2-digit',
       minute: '2-digit'
     });
-    clockEl.textContent = `${date} \u2014 ${time} Uhr`;
+    clockEl.textContent = `${date} — ${time} Uhr`;
   }
 
   updateClock();

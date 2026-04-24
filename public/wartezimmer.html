@@ -41,6 +41,13 @@
     <div class="clock" id="clock"></div>
   </footer>
 
+  <div class="audio-status" id="audioStatus" title="Ton inaktiv – Seite anklicken">
+    <span class="audio-status-icon">🔇</span>
+    <span class="audio-status-text">Ton inaktiv</span>
+  </div>
+
+  <audio id="gongAudio" src="/assets/gong.wav" preload="auto"></audio>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/wartezimmer.js"></script>
 </body>

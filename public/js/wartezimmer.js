@@ -14,6 +14,10 @@
   let isActivated = false;
   let clearTimer = null;
 
+  function formatRoom(room) {
+    return /^\d+$/.test(String(room)) ? `Zimmer ${room}` : String(room);
+  }
+
   // Activation overlay — required for audio autoplay policy
   overlay.addEventListener('click', () => {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -99,7 +103,7 @@
 
     if (room) {
       patientLabel.textContent = 'Bitte ins Behandlungszimmer kommen:';
-      patientRoom.textContent = `Zimmer ${room}`;
+      patientRoom.textContent = formatRoom(room);
       patientRoom.style.display = '';
     } else {
       patientLabel.textContent = 'Bitte ins Behandlungszimmer kommen:';
@@ -144,7 +148,7 @@
       patientName.textContent = currentPatient;
       if (currentRoom) {
         patientLabel.textContent = 'Bitte ins Behandlungszimmer kommen:';
-        patientRoom.textContent = `Zimmer ${currentRoom}`;
+        patientRoom.textContent = formatRoom(currentRoom);
         patientRoom.style.display = '';
       } else {
         patientLabel.textContent = 'Bitte ins Behandlungszimmer kommen:';
